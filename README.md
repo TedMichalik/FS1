@@ -18,6 +18,7 @@ apt update
 apt dist-upgrade
 apt install git
 https://github.com/TedMichalik/DC1.git
+```
 
 Switch to a static IP address.
 A second adapter was enabled for SSH logins for testing in VirtualBox.
