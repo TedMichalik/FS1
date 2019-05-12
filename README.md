@@ -3,10 +3,10 @@ Scripts and configuration files needed to set up an Active Directory Domain Cont
 
 Reference links:
 
-https://wiki.samba.org/index.php/Setting_up_Samba_as_an_Active_Directory_Domain_Controller
-https://wiki.samba.org/index.php/Idmap_config_ad
-https://github.com/christgau/wsdd
-https://wiki.samba.org/index.php/Setting_up_a_Share_Using_Windows_ACLs
+* https://wiki.samba.org/index.php/Setting_up_Samba_as_an_Active_Directory_Domain_Controller
+* https://wiki.samba.org/index.php/Idmap_config_ad
+* https://github.com/christgau/wsdd
+* https://wiki.samba.org/index.php/Setting_up_a_Share_Using_Windows_ACLs
 
 Download the Debian netinstall image. Boot from it to begin the installation.
 
