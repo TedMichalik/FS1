@@ -1,0 +1,32 @@
+#!/bin/bash
+# CopyFiles - Script to copy configuration files to their proper location.
+
+# Static IP
+cp /root/DC1/config/interfaces /etc/network/
+
+# DNS name resolving
+cp /root/DC1/config/resolv.conf /etc/
+
+# Local host name
+cp /root/DC1/config/hosts /etc/
+
+# Default UMASK
+cp /root/DC1/config/login.defs /etc/
+
+# WSD Daemon
+cp /root/DC1/config/wsdd /usr/bin/
+cp /root/DC1/config/wsdd.service /etc/systemd/system/
+
+# Authentication
+cp /root/DC1/config/nsswitch.conf /etc/
+
+# Make home directory
+cp /root/DC1/config/mkhomedir /usr/share/pam-configs/
+
+# sudo for Domain Admins
+cp /root/DC1/config/SAMDOM /etc/sudoers.d/
+
+# DHCP Service
+cp /root/DC1/config/isc-dhcp-server /etc/default/
+cp /root/DC1/etc/config/dhcpd.conf /etc/dhcp/
+

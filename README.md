@@ -1,6 +1,13 @@
 # DC1 - Debian AD DC Setup
 Scripts and configuration files needed to set up an Active Directory Domain Controller on Debian.
 
+Reference links:
+
+https://wiki.samba.org/index.php/Setting_up_Samba_as_an_Active_Directory_Domain_Controller
+https://wiki.samba.org/index.php/Idmap_config_ad
+https://github.com/christgau/wsdd
+https://wiki.samba.org/index.php/Setting_up_a_Share_Using_Windows_ACLs
+
 Download the Debian netinstall image. Boot from it to begin the installation.
 
 * Hostname: DC1.samdom.example.com
@@ -17,12 +24,16 @@ Install git and download these instructions, scripts and configuration files:
 apt update
 apt dist-upgrade
 apt install git
-https://github.com/TedMichalik/DC1.git
 ```
+git clone https://github.com/TedMichalik/DC1.git
 
+Copy config files to their proper location:
+```
+DC1/CopyFiles1
+```
 Switch to a static IP address.
 A second adapter was enabled for SSH logins for testing in VirtualBox.
-Make these changes to the **/etc/network/interfaces** file:
+Make these changes to the **/etc/network/interfaces** file (Done with CopyFiles1):
 ```
 # The primary network interface
 allow-hotplug enp0s3
@@ -38,14 +49,14 @@ allow-hotplug enp0s8
 iface enp0s8 inet static
         address 192.168.56.5/24
 ```
-Make these changes for resolving DNS names to the **/etc/resolv.conf** file:
+Make these changes for resolving DNS names to the **/etc/resolv.conf** file (Done with CopyFiles1):
 ```
 domain samdom.example.com
 search samdom.example.com
 nameserver 10.0.2.5
 nameserver 8.8.8.8
 ```
-Make these changes for resolving the local host name to the **/etc/hosts** file:
+Make these changes for resolving the local host name to the **/etc/hosts** file (Done with CopyFiles1):
 ```
 127.0.0.1 localhost
 10.0.2.5 DC1.samdom.example.com DC1
@@ -53,7 +64,7 @@ Make these changes for resolving the local host name to the **/etc/hosts** file:
 Reboot the machine to switch to the static IP address.
 Login as the admin user and switch to root.
 
-Change the default UMASK in the **/etc/login.defs** file:
+Change the default UMASK in the **/etc/login.defs** file (Done with CopyFiles1):
 ```
 UMASK 002
 ```
@@ -80,7 +91,11 @@ Server Role=dc
 DNS backend=SAMBA_INTERNAL
 DNS forwarder IP address=8.8.8.8
 ```
-Add these lines to the [global] section of **/etc/samba/smb.conf** (version < 4.6.0).
+Edit the Samba configuration file:
+```
+DC1/EditSMB
+```
+These lines are added by the EditSMB script to the [global] section of **/etc/samba/smb.conf** (version < 4.6.0).
 The winbind lines may not be necessary, but I have not tested that yet.
 ```
 winbind nss info = rfc2307
@@ -134,10 +149,12 @@ Restart the NTP service and verify it is syncing with other servers
 systemctl restart ntp.service
 ntpq -p
 ```
-Ease AD password restrictions, if desired:
+Ease AD password restrictions for testing, if desired:
 ```
 samba-tool domain passwordsettings set --complexity=off
 samba-tool domain passwordsettings set --min-pwd-length=6
 samba-tool domain passwordsettings set --max-pwd-age=0
 samba-tool user setexpiry administrator --noexpiry
 ```
+Install the WSD Daemon which allows Windows Network to detect Linux domain members
+
