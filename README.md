@@ -80,7 +80,7 @@ Stop and disable all Samba processes,  and remove the default smb.conf file:
 ```
 systemctl stop smbd nmbd winbind
 systemctl disable smbd nmbd winbind
-rm /etc/samba/smb.conf
+mv /etc/samba/smb.conf /etc/samba/smb.conf.orig
 ```
 Provision the Samba AD, giving your desired password for the Administrator:
 ```
