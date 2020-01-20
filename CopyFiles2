@@ -1,0 +1,22 @@
+#!/bin/bash
+# CopyFiles2 - Script #2 to copy configuration files to their proper location.
+#		(Fist save originals as *.orig)
+
+# DNS name resolving
+cp /root/DC1/config/resolv.conf2 /etc/resolv.conf
+
+# WSD Daemon
+cp /root/DC1/config/wsdd /usr/bin/
+cp /root/DC1/config/wsdd.service /etc/systemd/system/
+
+# Authentication
+mv /etc/nsswitch.conf /etc/nsswitch.conf.orig
+cp /root/DC1/config/nsswitch.conf /etc/
+
+# sudo for Domain Admins
+cp /root/DC1/config/SAMDOM /etc/sudoers.d/
+
+# DHCP Service
+cp /root/DC1/config/isc-dhcp-server /etc/default/
+cp /root/DC1/etc/config/dhcpd.conf /etc/dhcp/
+
