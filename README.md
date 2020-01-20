@@ -53,7 +53,6 @@ Make these changes for resolving DNS names to the **/etc/resolv.conf** file (Don
 ```
 domain samdom.example.com
 search samdom.example.com
-nameserver 10.0.2.5
 nameserver 8.8.8.8
 ```
 Make these changes for resolving the local host name to the **/etc/hosts** file (Done with CopyFiles1):
@@ -68,7 +67,7 @@ Change the default UMASK in the **/etc/login.defs** file (Done with CopyFiles1):
 ```
 UMASK 002
 ```
-Install Samba and packages needed for an AD DC. Use the FQDN for the server in the Kerberos setup.
+Install Samba and packages needed for an AD DC. Use the FQDN (DC1.samdom.example.com) for the servers in the Kerberos setup.
 ```
 apt install samba attr winbind libpam-winbind libnss-winbind libpam-krb5 krb5-config krb5-user
 ```
@@ -118,6 +117,10 @@ Login as the admin user and switch to root.
 Verify the File Server shares provided by the DC:
 ```
 smbclient -L localhost -U%
+```
+Copy more config files to their proper location:
+```
+DC1/CopyFiles2
 ```
 Verify the DNS configuration works correctly:
 ```
