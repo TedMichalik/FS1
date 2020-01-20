@@ -27,9 +27,8 @@ Install git and download these instructions, scripts and configuration files:
 apt update
 apt dist-upgrade
 apt install git
-```
 git clone https://github.com/TedMichalik/DC1.git
-
+```
 Copy config files to their proper location:
 ```
 DC1/CopyFiles1
@@ -90,6 +89,8 @@ DC1/EditSMB
 ```
 These lines are added by the EditSMB script to the [global] section of **/etc/samba/smb.conf** (version < 4.6.0).
 ```
+template shell = /bin/bash
+template homedir = /home/%U
 winbind nss info = rfc2307
 winbind use default domain = yes
 winbind offline logon = yes

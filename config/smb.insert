@@ -1,3 +1,5 @@
+	template shell = /bin/bash
+	template homedir = /home/%U
 	winbind nss info = rfc2307
 	winbind use default domain = yes
 	winbind offline logon = yes
