@@ -5,29 +5,30 @@ FIRST_ID=10000
  
 # Find users and computers without a uidNumber and groups without a gidNumber
  
-# Add a uidNumber, home directory and shell to non-system user accounts (RID >= 1000)
+# Add a uidNumber, home directory and shell to user accounts
 while read DN; do
 	RID=$(ldbsearch -H /var/lib/samba/private/sam.ldb -s base -b "$DN" objectSid | grep objectSid | awk -F "-" '{print $NF}')
+	IDNUMBER=$(($FIRST_ID + $RID))
+	printf "Adding uidNumber '$IDNUMBER' to '$DN'\n"
+ 
+	TMP_FILE=$(mktemp "/tmp/$(basename $0)-XXXXX")
+	printf "dn: $DN\n" >$TMP_FILE
+	printf "changeType: modify\n" >>$TMP_FILE
+	printf "add: uidNumber\n" >>$TMP_FILE
+	printf "uidNumber: ${IDNUMBER}\n" >>$TMP_FILE
+	printf "add: unixHomeDirectory\n" >>$TMP_FILE
+	printf "unixHomeDirectory: /home/%%U\n" >>$TMP_FILE
+	printf "add: loginShell\n" >>$TMP_FILE
 	if [ $RID -ge 1000 ]
 	then
-		printf "Adding a uidNumber to '$DN'\n"
-		IDNUMBER=$(($FIRST_ID + $RID))
- 
-		TMP_FILE=$(mktemp "/tmp/$(basename $0)-XXXXX")
-		printf "dn: $DN\n" >$TMP_FILE
-		printf "changeType: modify\n" >>$TMP_FILE
-		printf "add: uidNumber\n" >>$TMP_FILE
-		printf "uidNumber: ${IDNUMBER}\n" >>$TMP_FILE
-		printf "add: unixHomeDirectory\n" >>$TMP_FILE
-		printf "unixHomeDirectory: /home/%%U\n" >>$TMP_FILE
-		printf "add: loginShell\n" >>$TMP_FILE
 		printf "loginShell: /bin/bash\n" >>$TMP_FILE
- 
-		ldbmodify -H /var/lib/samba/private/sam.ldb $TMP_FILE
-		cat $TMP_FILE
 	else
-		printf "Skipping system user '$DN'\n"
+# No login for system accounts (RID < 1000)
+		printf "loginShell: /usr/sbin/nologin\n" >>$TMP_FILE
 	fi
+ 
+	ldbmodify -H /var/lib/samba/private/sam.ldb $TMP_FILE
+	cat $TMP_FILE
 done < <(ldbsearch -H /var/lib/samba/private/sam.ldb '(&(ObjectClass=User)(!(ObjectClass=computer))(!(uidNumber=*)))' dn | grep "dn:" | awk -F ':' '{print $2}')
  
 # Add a uidNumber to computers
@@ -35,8 +36,8 @@ while read DN; do
 	RID=$(ldbsearch -H /var/lib/samba/private/sam.ldb -s base -b "$DN" objectSid | grep objectSid | awk -F "-" '{print $NF}')
 	if [ $RID -ge 1000 ]
 	then
-		printf "Adding a uidNumber to '$DN'\n"
 		IDNUMBER=$(($FIRST_ID + $RID))
+		printf "Adding uidNumber '$IDNUMBER' to '$DN'\n"
  
 		TMP_FILE=$(mktemp "/tmp/$(basename $0)-XXXXX")
 		printf "dn: $DN\n" >$TMP_FILE
@@ -53,9 +54,9 @@ done < <(ldbsearch -H /var/lib/samba/private/sam.ldb '(&(ObjectClass=User)(Objec
  
 # Add a gidNumber to all groups
 while read DN; do
-	printf "Adding a gidNumber to '$DN'\n"
 	RID=$(ldbsearch -H /var/lib/samba/private/sam.ldb -s base -b "$DN" objectSid | grep objectSid | awk -F "-" '{print $NF}')
 	IDNUMBER=$(($FIRST_ID + $RID))
+	printf "Adding gidNumber '$IDNUMBER' to '$DN'\n"
  
 	TMP_FILE=$(mktemp "/tmp/$(basename $0)-XXXXX")
 	printf "dn: $DN\n" >$TMP_FILE
@@ -68,4 +69,4 @@ while read DN; do
 done < <(ldbsearch -H /var/lib/samba/private/sam.ldb '(&(ObjectClass=Group)(!(gidNumber=*)))' dn | grep "dn:" | awk -F ':' '{print $2}')
  
 # Cleanup temp files
-rm /tmp/$0-*
+rm /tmp/$(basename $0)-*
