@@ -5,9 +5,17 @@
 # DNS name resolving
 cp /root/DC1/config/resolv.conf2 /etc/resolv.conf
 
+# NTP Time Service
+mv /etc/ntp.conf /etc/ntp.conf.orig
+cp /root/DC1/config/ntp.conf /etc/
+systemctl restart ntp.service
+
 # WSD Daemon
 cp /root/DC1/config/wsdd /usr/bin/
 cp /root/DC1/config/wsdd.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable wsdd.service
+systemctl start wsdd.service
 
 # Authentication
 mv /etc/nsswitch.conf /etc/nsswitch.conf.orig

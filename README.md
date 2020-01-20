@@ -12,6 +12,9 @@ Download the Debian netinstall image. Boot from it to begin the installation.
 
 * Hostname: DC1.samdom.example.com
 * Leave the root password blank.
+* Manually set the enp0s3 network interface:
+** address 10.0.2.5/24
+** gateway 10.0.2.1
 * Enter the desired user name and password for the admin (sudo) account.
 * Make your disk partition selections and write changes to disk.
 * Software selection: Only “SSH server” and “standard system utilities”.
@@ -31,7 +34,7 @@ Copy config files to their proper location:
 ```
 DC1/CopyFiles1
 ```
-Switch to a static IP address.
+Add a static IP address for the second adapter.
 A second adapter was enabled for SSH logins for testing in VirtualBox.
 Make these changes to the **/etc/network/interfaces** file (Done with CopyFiles1):
 ```
@@ -40,20 +43,11 @@ allow-hotplug enp0s3
 iface enp0s3 inet static
         address 10.0.2.5/24
         gateway 10.0.2.1
-        # dns-* options are implemented by the resolvconf package, if installed
-        dns-nameservers 10.0.2.1
-        dns-search samdom.example.com
 
-# The primary network interface
+# The secondary network interface
 allow-hotplug enp0s8
 iface enp0s8 inet static
         address 192.168.56.5/24
-```
-Make these changes for resolving DNS names to the **/etc/resolv.conf** file (Done with CopyFiles1):
-```
-domain samdom.example.com
-search samdom.example.com
-nameserver 8.8.8.8
 ```
 Make these changes for resolving the local host name to the **/etc/hosts** file (Done with CopyFiles1):
 ```
@@ -73,7 +67,7 @@ apt install samba attr winbind libpam-winbind libnss-winbind libpam-krb5 krb5-co
 ```
 Also install some utility programs:
 ```
-apt install smbclient ldb-tools net-tools dnsutils
+apt install smbclient ldb-tools net-tools dnsutils ntp
 ```
 Stop and disable all Samba processes,  and remove the default smb.conf file:
 ```
@@ -95,7 +89,6 @@ Edit the Samba configuration file:
 DC1/EditSMB
 ```
 These lines are added by the EditSMB script to the [global] section of **/etc/samba/smb.conf** (version < 4.6.0).
-The winbind lines may not be necessary, but I have not tested that yet.
 ```
 winbind nss info = rfc2307
 winbind use default domain = yes
@@ -122,6 +115,13 @@ Copy more config files to their proper location:
 ```
 DC1/CopyFiles2
 ```
+Make these changes for resolving DNS names to the **/etc/resolv.conf** file (Done with CopyFiles2):
+```
+domain samdom.example.com
+search samdom.example.com
+nameserver 10.0.2.5
+nameserver 8.8.8.8
+```
 Verify the DNS configuration works correctly:
 ```
 host -t SRV _ldap._tcp.samdom.example.com.
@@ -133,11 +133,7 @@ Verify Kerberos:
 kinit administrator
 klist
 ```
-Install NTP Time Synchronization
-```
-apt install ntp
-```
-Configure NTP by editing these two lines in the **/etc/ntp.conf** file:
+Configure NTP by editing these two lines in the **/etc/ntp.conf** file (Done with CopyFiles2):
 ```
 # Clients from this (example!) subnet have unlimited access, but only if
 # cryptographically authenticated.
@@ -147,9 +143,12 @@ restrict 10.0.2.0 mask 255.255.255.0 notrust
 # (Again, the address is an example only.)
 broadcast 10.0.2.255
 ```
-Restart the NTP service and verify it is syncing with other servers
+Restart the NTP service and verify it is syncing with other servers (Done with CopyFiles2):
 ```
 systemctl restart ntp.service
+```
+Verify the NTP service is syncing with other servers
+```
 ntpq -p
 ```
 Ease AD password restrictions for testing, if desired:
@@ -159,5 +158,42 @@ samba-tool domain passwordsettings set --min-pwd-length=6
 samba-tool domain passwordsettings set --max-pwd-age=0
 samba-tool user setexpiry administrator --noexpiry
 ```
-Install the WSD Daemon which allows Windows Network to detect Linux domain members
+Install the WSD Daemon which allows Windows Network to detect Linux domain members (Done with CopyFiles2).
 
+Clone git repository and edit file:
+```
+git clone https://github.com/christgau/wsdd
+cd wsdd
+```
+Edit service file nano etc/systemd/wsdd.service
+```
+After=multi-user.target
+Wants=multi-user.target
+ExecStart=/usr/bin/wsdd -d SAMDOM -4 -s
+User=daemon
+Group=daemon
+```
+Copy the files to the correct locations, enable the service, and start it:
+```
+cp src/wsdd.py /usr/bin/wsdd
+cp etc/systemd/wsdd.service /etc/systemd/system
+systemctl daemon-reload
+systemctl enable wsdd.service
+systemctl start wsdd.service
+```
+Configure AD Accounts Authentication
+
+Add winbind value for passwd and group lines in the /etc/nsswitch.conf configuration file (Done with CopyFiles2):
+```
+passwd: files systemd winbind
+group:  files systemd winbind
+```
+Enable  entries required for winbind service to automatically create home directories for each domain account at the first login:
+```
+pam-auth-update
+```
+Give sudo access to members of “domain admins” (Done with CopyFiles2):
+```
+echo "%SAMDOM\\domain\ admins ALL=(ALL) ALL" > /etc/sudoers.d/SAMDOM
+chmod 0440 /etc/sudoers.d/SAMDOM
+```
