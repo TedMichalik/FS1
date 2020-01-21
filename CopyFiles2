@@ -2,6 +2,9 @@
 # CopyFiles2 - Script #2 to copy configuration files to their proper location.
 #		(Fist save originals as *.orig)
 
+# Copy script to cron.hourly that sets RFC2307 attributes in the SAMBA AD DC
+cp /root/DC1/RFC2307 /etc/cron.hourly/
+
 # DNS name resolving
 cp /root/DC1/config/resolv.conf2 /etc/resolv.conf
 

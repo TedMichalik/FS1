@@ -2,6 +2,7 @@
 # RFC2307 - Script to set RFC2307 attributes in the SAMBA Active Directory Domain Controller
  
 FIRST_ID=10000
+CHANGES=0
  
 # Find users and computers without a uidNumber and groups without a gidNumber
  
@@ -9,7 +10,7 @@ FIRST_ID=10000
 while read DN; do
 	RID=$(ldbsearch -H /var/lib/samba/private/sam.ldb -s base -b "$DN" objectSid | grep objectSid | awk -F "-" '{print $NF}')
 	IDNUMBER=$(($FIRST_ID + $RID))
-	printf "Adding uidNumber '$IDNUMBER' to '$DN'\n"
+	if [ -t 1 ]; then printf "Adding uidNumber '$IDNUMBER' to '$DN'\n"; fi
  
 	TMP_FILE=$(mktemp "/tmp/$(basename $0)-XXXXX")
 	printf "dn: $DN\n" >$TMP_FILE
@@ -28,7 +29,8 @@ while read DN; do
 	fi
  
 	ldbmodify -H /var/lib/samba/private/sam.ldb $TMP_FILE
-	cat $TMP_FILE
+	if [ -t 1 ]; then cat $TMP_FILE; fi
+	((CHANGES++))
 done < <(ldbsearch -H /var/lib/samba/private/sam.ldb '(&(ObjectClass=User)(!(ObjectClass=computer))(!(uidNumber=*)))' dn | grep "dn:" | awk -F ':' '{print $2}')
  
 # Add a uidNumber to computers
@@ -37,7 +39,7 @@ while read DN; do
 	if [ $RID -ge 1000 ]
 	then
 		IDNUMBER=$(($FIRST_ID + $RID))
-		printf "Adding uidNumber '$IDNUMBER' to '$DN'\n"
+		if [ -t 1 ]; then printf "Adding uidNumber '$IDNUMBER' to '$DN'\n"; fi
  
 		TMP_FILE=$(mktemp "/tmp/$(basename $0)-XXXXX")
 		printf "dn: $DN\n" >$TMP_FILE
@@ -46,9 +48,10 @@ while read DN; do
 		printf "uidNumber: ${IDNUMBER}\n" >>$TMP_FILE
  
 		ldbmodify -H /var/lib/samba/private/sam.ldb $TMP_FILE
-		cat $TMP_FILE
+		if [ -t 1 ]; then cat $TMP_FILE; fi
+	        ((CHANGES++))
 	else
-		printf "Skipping computer '$DN'\n"
+		if [ -t 1 ]; then printf "Skipping computer '$DN'\n"; fi
 	fi
 done < <(ldbsearch -H /var/lib/samba/private/sam.ldb '(&(ObjectClass=User)(ObjectClass=computer)(!(uidNumber=*)))' dn | grep "dn:" | awk -F ':' '{print $2}')
  
@@ -56,7 +59,7 @@ done < <(ldbsearch -H /var/lib/samba/private/sam.ldb '(&(ObjectClass=User)(Objec
 while read DN; do
 	RID=$(ldbsearch -H /var/lib/samba/private/sam.ldb -s base -b "$DN" objectSid | grep objectSid | awk -F "-" '{print $NF}')
 	IDNUMBER=$(($FIRST_ID + $RID))
-	printf "Adding gidNumber '$IDNUMBER' to '$DN'\n"
+	if [ -t 1 ]; then printf "Adding gidNumber '$IDNUMBER' to '$DN'\n"; fi
  
 	TMP_FILE=$(mktemp "/tmp/$(basename $0)-XXXXX")
 	printf "dn: $DN\n" >$TMP_FILE
@@ -65,8 +68,16 @@ while read DN; do
 	printf "gidNumber: ${IDNUMBER}\n" >>$TMP_FILE
  
 	ldbmodify -H /var/lib/samba/private/sam.ldb $TMP_FILE
-	cat $TMP_FILE
+	if [ -t 1 ]; then cat $TMP_FILE; fi
+        ((CHANGES++))
 done < <(ldbsearch -H /var/lib/samba/private/sam.ldb '(&(ObjectClass=Group)(!(gidNumber=*)))' dn | grep "dn:" | awk -F ':' '{print $2}')
  
+if [ $CHANGES -gt 0 ]
+then
 # Cleanup temp files
-rm /tmp/$(basename $0)-*
+	rm /tmp/$(basename $0)-*
+# Flush the cache
+	net cache flush
+else
+        if [ -t 1 ]; then printf "No changes made\n"; fi
+fi
