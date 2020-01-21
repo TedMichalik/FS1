@@ -113,7 +113,7 @@ Verify the File Server shares provided by the DC:
 smbclient -L localhost -U%
 ```
 Copy more config files to their proper location. This also puts the RFC2307 script in cron.hourly to add uidNumber
-and gidNumber to users, computers and groups added to AD.
+and gidNumber to users, computers and groups added to AD. It runs the script and fixes the ownership of Group Policies.
 ```
 DC1/CopyFiles2
 ```
