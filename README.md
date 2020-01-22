@@ -89,8 +89,6 @@ DC1/EditSMB
 ```
 These lines are added by the EditSMB script to the [global] section of **/etc/samba/smb.conf**
 ```
-template shell = /bin/bash
-template homedir = /home/%U
 winbind nss info = rfc2307
 winbind use default domain = yes
 winbind offline logon = yes
