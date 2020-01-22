@@ -34,7 +34,7 @@ Copy config files to their proper location:
 DC1/CopyFiles1
 ```
 Add a static IP address for the second adapter.
-A second adapter was enabled for SSH logins for testing in VirtualBox.
+A second adapter was enabled for SSH logins forconfiguration and testing in VirtualBox.
 Make these changes to the **/etc/network/interfaces** file (Done with CopyFiles1):
 ```
 # The primary network interface
@@ -53,13 +53,13 @@ Make these changes for resolving the local host name to the **/etc/hosts** file 
 127.0.0.1 localhost
 10.0.2.5 DC1.samdom.example.com DC1
 ```
-Reboot the machine to switch to the static IP address.
-Login as the admin user and switch to root.
-
 Change the default UMASK in the **/etc/login.defs** file (Done with CopyFiles1):
 ```
 UMASK 002
 ```
+Reboot the machine to switch to the static IP address.
+SSH into the secondary adapter and login as the admin user and switch to root.
+
 Install Samba and packages needed for an AD DC. Use the FQDN (DC1.samdom.example.com) for the servers in the Kerberos setup.
 ```
 apt install samba attr winbind libpam-winbind libnss-winbind libpam-krb5 krb5-config krb5-user
@@ -87,7 +87,7 @@ Edit the Samba configuration file:
 ```
 DC1/EditSMB
 ```
-These lines are added by the EditSMB script to the [global] section of **/etc/samba/smb.conf** (version < 4.6.0).
+These lines are added by the EditSMB script to the [global] section of **/etc/samba/smb.conf**
 ```
 template shell = /bin/bash
 template homedir = /home/%U
@@ -199,9 +199,9 @@ Give sudo access to members of “domain admins” (Done with CopyFiles2):
 echo "%SAMDOM\\domain\ admins ALL=(ALL) ALL" > /etc/sudoers.d/SAMDOM
 chmod 0440 /etc/sudoers.d/SAMDOM
 ```
-Configure the DHCP Service
+Configure the DHCP Service (Done with CopyFiles2):
 
-Just use IPv4 on the NatNetwork with these edits to the /etc/default/isc-dhcp-server configuration file (Done with CopyFiles2):
+Just use IPv4 on the NatNetwork with these edits to the /etc/default/isc-dhcp-server configuration file:
 ```
 # On what interfaces should the DHCP server (dhcpd) serve DHCP requests?
 # Separate multiple interfaces with spaces, e.g. "eth0 eth1".
@@ -252,4 +252,32 @@ option routers 10.0.2.1;
 Restart the service:
 ```
 systemctl restart isc-dhcp-server.service
+```
+Test the AD DC
+
+Create an AD account for yourself and add it to the “Domain Admins” group with the commands:
+```
+samba-tool user create ted
+/etc/cron.hourly/RFC2307
+samba-tool group addmembers "Domain Admins" ted
+```
+Verify the domain users are shown by both commands:
+```
+wbinfo -u
+getent passwd
+```
+Verify the domain groups are shown by both commands:
+```
+wbinfo -g
+getent group
+```
+Verify the domain ownership on a test file:
+```
+touch /tmp/testfile
+chown ted:"Domain Admins" /tmp/testfile
+ls -l /tmp/testfile
+```
+Create a GPO  with the instructions at this link:
+```
+https://wiki.samba.org/index.php/Time_Synchronisation#Configuring_Time_Synchronisation_on_a_Windows_Domain_Member
 ```
