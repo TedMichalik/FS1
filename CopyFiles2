@@ -30,6 +30,8 @@ cp /root/DC1/config/nsswitch.conf /etc/
 cp /root/DC1/config/SAMDOM /etc/sudoers.d/
 
 # DHCP Service
+mv /etc/default/isc-dhcp-server /etc/default/isc-dhcp-server.orig
 cp /root/DC1/config/isc-dhcp-server /etc/default/
-cp /root/DC1/etc/config/dhcpd.conf /etc/dhcp/
-
+mv /etc/dhcp/dhcpd.conf /etc/dhcp/dhcpd.conf.orig
+cp /root/DC1/config/dhcpd.conf /etc/dhcp/
+systemctl restart isc-dhcp-server.service

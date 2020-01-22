@@ -66,7 +66,7 @@ apt install samba attr winbind libpam-winbind libnss-winbind libpam-krb5 krb5-co
 ```
 Also install some utility programs:
 ```
-apt install smbclient ldb-tools net-tools dnsutils ntp
+apt install smbclient ldb-tools net-tools dnsutils ntp isc-dhcp-server
 ```
 Stop and disable all Samba processes,  and remove the default smb.conf file:
 ```
@@ -198,4 +198,58 @@ Give sudo access to members of “domain admins” (Done with CopyFiles2):
 ```
 echo "%SAMDOM\\domain\ admins ALL=(ALL) ALL" > /etc/sudoers.d/SAMDOM
 chmod 0440 /etc/sudoers.d/SAMDOM
+```
+Configure the DHCP Service
+
+Just use IPv4 on the NatNetwork with these edits to the /etc/default/isc-dhcp-server configuration file (Done with CopyFiles2):
+```
+# On what interfaces should the DHCP server (dhcpd) serve DHCP requests?
+# Separate multiple interfaces with spaces, e.g. "eth0 eth1".
+INTERFACESv4="enp0s3"
+#INTERFACESv6=""
+```
+Edit the /etc/dhcp/dhcpd.conf configuration file:
+```
+# dhcpd.conf
+#
+# Sample configuration file for ISC dhcpd
+#
+#
+# option definitions common to all supported networks...
+option domain-name "samdom.example.com";
+option domain-name-servers DC1.samdom.example.com;
+#
+default-lease-time 600;
+max-lease-time 7200;
+#
+# The ddns-updates-style parameter controls whether or not the server will
+# attempt to do a DNS update when a lease is confirmed. We default to the
+# behavior of the version 2 packages ('none', since DHCP v2 didn't
+# have support for DDNS.)
+ddns-update-style none;
+#
+# If this DHCP server is the official DHCP server for the local
+# network, the authoritative directive should be uncommented.
+authoritative;
+#
+# Use this to send dhcp log messages to a different log file (you also
+# have to hack syslog.conf to complete the redirection).
+#log-facility local7;
+#
+# No service will be given on this subnet, but declaring it helps the
+# DHCP server to understand the network topology.
+#
+subnet 192.168.56.0 netmask 255.255.255.0 {
+}
+#
+# This is a very basic subnet declaration.
+#
+subnet 10.0.2.0 netmask 255.255.255.0 {
+range 10.0.2.50 10.0.2.100;
+option routers 10.0.2.1;
+}
+```
+Restart the service:
+```
+systemctl restart isc-dhcp-server.service
 ```
