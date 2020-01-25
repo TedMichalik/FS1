@@ -89,6 +89,7 @@ DC1/EditSMB
 ```
 These lines are added by the EditSMB script to the [global] section of **/etc/samba/smb.conf**
 ```
+interfaces = enp0s3
 winbind nss info = rfc2307
 winbind use default domain = yes
 winbind offline logon = yes
@@ -215,10 +216,10 @@ Edit the /etc/dhcp/dhcpd.conf configuration file:
 #
 # option definitions common to all supported networks...
 option domain-name "samdom.example.com";
-option domain-name-servers DC1.samdom.example.com;
+option domain-name-servers 10.0.2.5;
 #
-default-lease-time 600;
-max-lease-time 7200;
+default-lease-time 86400;
+max-lease-time 604800;
 #
 # The ddns-updates-style parameter controls whether or not the server will
 # attempt to do a DNS update when a lease is confirmed. We default to the
@@ -253,7 +254,7 @@ systemctl restart isc-dhcp-server.service
 ```
 ##Test the AD DC
 
-Create an AD account for yourself and add it to the “Domain Admins” group with the commands:
+Create an AD account for yourself and add it to the **Domain Admins** group with the commands:
 ```
 samba-tool user create ted
 /etc/cron.hourly/RFC2307
@@ -275,16 +276,18 @@ touch /tmp/testfile
 chown ted:"Domain Admins" /tmp/testfile
 ls -l /tmp/testfile
 ```
+
 ##Join a Windows 10 Pro Desktop to the SAMDOM Domain
 
-After joining the Windows desktop to the Domain, login with your "Domain Admins" account.
+After joining the Windows desktop to the Domain, login with your **Domain Admins** account.
 
 Go to **Settings | Apps & Features | Optional features** and make sure the following are installed:
+
 *RSAT: Active Directory Domain Services and Lightweight Directory Services Tools
 *RSAT: DNS Server Tools
 *RSAT: Group Policy Management Tools
 
-Run *Active Directory Users and Computers* and make the *Domain Admins* group a member of the
-*Group Policy Creator Owners* group.
+Run **Active Directory Users and Computers** and make the **Domain Admins** group a member of the
+**Group Policy Creator Owners** group.
 
-Create a GPO  with the instructions at [Tthis Link](https://wiki.samba.org/index.php/Time_Synchronisation#Configuring_Time_Synchronisation_on_a_Windows_Domain_Member)
+Create a GPO  with the instructions at [This Link](https://wiki.samba.org/index.php/Time_Synchronisation#Configuring_Time_Synchronisation_on_a_Windows_Domain_Member)
