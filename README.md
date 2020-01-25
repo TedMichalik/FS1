@@ -252,7 +252,7 @@ Restart the service:
 ```
 systemctl restart isc-dhcp-server.service
 ```
-##Test the AD DC
+## Test the AD DC
 
 Create an AD account for yourself and add it to the **Domain Admins** group with the commands:
 ```
@@ -277,17 +277,17 @@ chown ted:"Domain Admins" /tmp/testfile
 ls -l /tmp/testfile
 ```
 
-##Join a Windows 10 Pro Desktop to the SAMDOM Domain
+## Join a Windows 10 Pro Desktop to the SAMDOM Domain
 
 After joining the Windows desktop to the Domain, login with your **Domain Admins** account.
 
 Go to **Settings | Apps & Features | Optional features** and make sure the following are installed:
+* RSAT: Active Directory Domain Services and Lightweight Directory Services Tools
+* RSAT: DNS Server Tools
+* RSAT: Group Policy Management Tools
 
-*RSAT: Active Directory Domain Services and Lightweight Directory Services Tools
-*RSAT: DNS Server Tools
-*RSAT: Group Policy Management Tools
-
-Run **Active Directory Users and Computers** and make the **Domain Admins** group a member of the
-**Group Policy Creator Owners** group.
+Run **Active Directory Users and Computers**:
+* Make the **Domain Admins** group a member of the **Group Policy Creator Owners** group.
+* Make the **Domain Computers** group a member of the **DnsAdmins** group.
 
 Create a GPO  with the instructions at [This Link](https://wiki.samba.org/index.php/Time_Synchronisation#Configuring_Time_Synchronisation_on_a_Windows_Domain_Member)
