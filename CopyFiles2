@@ -5,7 +5,9 @@
 # Copy script to cron.hourly that sets RFC2307 attributes in the SAMBA AD DC
 cp /root/DC1/RFC2307 /etc/cron.hourly/
 /etc/cron.hourly/RFC2307
-chown 10500 -R /var/lib/samba/sysvol/samdom.example.com/Policies/*
+
+# Fix permissions for the domain on sysvol
+chown 10500:10512 -R /var/lib/samba/sysvol/samdom.example.com/
 
 # DNS name resolving
 cp /root/DC1/config/resolv.conf2 /etc/resolv.conf

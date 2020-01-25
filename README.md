@@ -13,8 +13,8 @@ Download the Debian netinstall image. Boot from it to begin the installation.
 * Hostname: DC1.samdom.example.com
 * Leave the root password blank.
 * Manually set the enp0s3 network interface:
-** address 10.0.2.5/24
-** gateway 10.0.2.1
+  * address 10.0.2.5/24
+  * gateway 10.0.2.1
 * Enter the desired user name and password for the admin (sudo) account.
 * Make your disk partition selections and write changes to disk.
 * Software selection: Only “SSH server” and “standard system utilities”.
@@ -158,7 +158,7 @@ samba-tool domain passwordsettings set --min-pwd-length=6
 samba-tool domain passwordsettings set --max-pwd-age=0
 samba-tool user setexpiry administrator --noexpiry
 ```
-Install the WSD Daemon which allows Windows Network to detect Linux domain members (Done with CopyFiles2).
+##Install the WSD Daemon which allows Windows Network to detect Linux domain members (Done with CopyFiles2).
 
 Clone git repository and edit file:
 ```
@@ -181,7 +181,7 @@ systemctl daemon-reload
 systemctl enable wsdd.service
 systemctl start wsdd.service
 ```
-**Configure AD Accounts Authentication**
+##Configure AD Accounts Authentication
 
 Add winbind value for passwd and group lines in the /etc/nsswitch.conf configuration file (Done with CopyFiles2):
 ```
@@ -197,7 +197,7 @@ Give sudo access to members of “domain admins” (Done with CopyFiles2):
 echo "%SAMDOM\\domain\ admins ALL=(ALL) ALL" > /etc/sudoers.d/SAMDOM
 chmod 0440 /etc/sudoers.d/SAMDOM
 ```
-**Configure the DHCP Service (Done with CopyFiles2):**
+##Configure the DHCP Service (Done with CopyFiles2):
 
 Just use IPv4 on the NatNetwork with these edits to the /etc/default/isc-dhcp-server configuration file:
 ```
@@ -251,7 +251,7 @@ Restart the service:
 ```
 systemctl restart isc-dhcp-server.service
 ```
-**Test the AD DC**
+##Test the AD DC
 
 Create an AD account for yourself and add it to the “Domain Admins” group with the commands:
 ```
@@ -275,7 +275,7 @@ touch /tmp/testfile
 chown ted:"Domain Admins" /tmp/testfile
 ls -l /tmp/testfile
 ```
-**Join a Windows 10 Pro Desktop to the SAMDOM Domain**
+##Join a Windows 10 Pro Desktop to the SAMDOM Domain
 
 After joining the Windows desktop to the Domain, login with your "Domain Admins" account.
 
@@ -287,7 +287,4 @@ Go to **Settings | Apps & Features | Optional features** and make sure the follo
 Run *Active Directory Users and Computers* and make the *Domain Admins* group a member of the
 *Group Policy Creator Owners* group.
 
-Create a GPO  with the instructions at this link:
-```
-https://wiki.samba.org/index.php/Time_Synchronisation#Configuring_Time_Synchronisation_on_a_Windows_Domain_Member
-```
+Create a GPO  with the instructions at [Tthis Link](https://wiki.samba.org/index.php/Time_Synchronisation#Configuring_Time_Synchronisation_on_a_Windows_Domain_Member)
