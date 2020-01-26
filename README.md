@@ -194,7 +194,7 @@ systemctl daemon-reload
 systemctl enable wsdd.service
 systemctl start wsdd.service
 ```
-##Configure AD Accounts Authentication
+## Configure AD Accounts Authentication
 
 Add winbind value for passwd and group lines in the /etc/nsswitch.conf configuration file (Done with CopyFiles2):
 ```
@@ -210,7 +210,7 @@ Give sudo access to members of “domain admins” (Done with CopyFiles2):
 echo "%SAMDOM\\domain\ admins ALL=(ALL) ALL" > /etc/sudoers.d/SAMDOM
 chmod 0440 /etc/sudoers.d/SAMDOM
 ```
-##Configure the DHCP Service (Done with CopyFiles2):
+## Configure the DHCP Service (Done with CopyFiles2):
 
 Just use IPv4 on the NatNetwork with these edits to the /etc/default/isc-dhcp-server configuration file:
 ```
