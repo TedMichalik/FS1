@@ -7,6 +7,7 @@ Reference links:
 * https://wiki.samba.org/index.php/Idmap_config_ad
 * https://github.com/christgau/wsdd
 * https://wiki.samba.org/index.php/Setting_up_a_Share_Using_Windows_ACLs
+* https://www.tecmint.com/manage-samba4-ad-from-windows-via-rsat/
 
 Download the Debian netinstall image. Boot from it to begin the installation.
 
@@ -134,32 +135,43 @@ Verify Kerberos:
 kinit administrator
 klist
 ```
-Configure NTP by editing these two lines in the **/etc/ntp.conf** file (Done with CopyFiles2):
-```
-# Clients from this (example!) subnet have unlimited access, but only if
-# cryptographically authenticated.
-restrict 10.0.2.0 mask 255.255.255.0 notrust
+## Configure NTP (Done with CopyFiles2)
 
-# If you want to provide time to your local subnet, change the next line.
-# (Again, the address is an example only.)
-broadcast 10.0.2.255
+Add these two lines in the **/etc/ntp.conf** file:
 ```
-Restart the NTP service and verify it is syncing with other servers (Done with CopyFiles2):
+ntpsigndsocket /var/lib/samba/ntp_signd/
+
+...
+
+restrict default kod nomodify notrap nopeer mssntp
+```
+Fix the permissions for the **ntp_signed** directory:
+```
+chown root:ntp /var/lib/samba/ntp_signd/
+chmod 750 /var/lib/samba/ntp_signd/
+```
+Restart the NTP service:
 ```
 systemctl restart ntp.service
 ```
-Verify the NTP service is syncing with other servers
+## Check NTP
+
+Verify the NTP service has open sockets:
+```
+netstat -tunlp | grep ntp
+```
+Verify the NTP service is syncing with other servers:
 ```
 ntpq -p
 ```
-Ease AD password restrictions for testing, if desired:
+## Ease AD password restrictions for testing, if desired:
 ```
 samba-tool domain passwordsettings set --complexity=off
 samba-tool domain passwordsettings set --min-pwd-length=6
 samba-tool domain passwordsettings set --max-pwd-age=0
 samba-tool user setexpiry administrator --noexpiry
 ```
-##Install the WSD Daemon which allows Windows Network to detect Linux domain members (Done with CopyFiles2).
+## Install the WSD Daemon which allows Windows Network to detect Linux domain members (Done with CopyFiles2).
 
 Clone git repository and edit file:
 ```
