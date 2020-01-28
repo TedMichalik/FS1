@@ -67,7 +67,7 @@ apt install samba attr winbind libpam-winbind libnss-winbind libpam-krb5 krb5-co
 ```
 Also install some utility programs:
 ```
-apt install smbclient ldb-tools net-tools dnsutils ntp isc-dhcp-server
+apt install smbclient ldb-tools net-tools dnsutils ntp isc-dhcp-server rsync
 ```
 Stop and disable all Samba processes,  and remove the default smb.conf file:
 ```
