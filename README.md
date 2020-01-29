@@ -1,5 +1,5 @@
-# DC1 - Debian AD DC Setup
-Scripts and configuration files needed to set up an Active Directory Domain Controller on Debian.
+# DC2 - Additional Debian AD DC Setup
+Scripts and configuration files needed to set up an additional Active Directory Domain Controller on Debian.
 
 Reference links:
 
@@ -11,10 +11,10 @@ Reference links:
 
 Download the Debian netinstall image. Boot from it to begin the installation.
 
-* Hostname: DC1.samdom.example.com
+* Hostname: DC2.samdom.example.com
 * Leave the root password blank.
 * Manually set the enp0s3 network interface:
-  * address 10.0.2.5/24
+  * address 10.0.2.6/24
   * gateway 10.0.2.1
 * Enter the desired user name and password for the admin (sudo) account.
 * Make your disk partition selections and write changes to disk.
@@ -28,11 +28,11 @@ Install git and download these instructions, scripts and configuration files:
 apt update
 apt dist-upgrade
 apt install git
-git clone https://github.com/TedMichalik/DC1.git
+git clone https://github.com/TedMichalik/DC2.git
 ```
 Copy config files to their proper location:
 ```
-DC1/CopyFiles1
+DC2/CopyFiles1
 ```
 Add a static IP address for the second adapter.
 A second adapter was enabled for SSH logins forconfiguration and testing in VirtualBox.
@@ -41,18 +41,18 @@ Make these changes to the **/etc/network/interfaces** file (Done with CopyFiles1
 # The primary network interface
 allow-hotplug enp0s3
 iface enp0s3 inet static
-        address 10.0.2.5/24
+        address 10.0.2.6/24
         gateway 10.0.2.1
 
 # The secondary network interface
 allow-hotplug enp0s8
 iface enp0s8 inet static
-        address 192.168.56.5/24
+        address 192.168.56.6/24
 ```
 Make these changes for resolving the local host name to the **/etc/hosts** file (Done with CopyFiles1):
 ```
 127.0.0.1 localhost
-10.0.2.5 DC1.samdom.example.com DC1
+10.0.2.6 DC2.samdom.example.com DC2
 ```
 Change the default UMASK in the **/etc/login.defs** file (Done with CopyFiles1):
 ```
@@ -61,7 +61,7 @@ UMASK 002
 Reboot the machine to switch to the static IP address.
 SSH into the secondary adapter and login as the admin user and switch to root.
 
-Install Samba and packages needed for an AD DC. Use the FQDN (DC1.samdom.example.com) for the servers in the Kerberos setup.
+Install Samba and packages needed for an AD DC. Use the FQDN (DC2.samdom.example.com) for the servers in the Kerberos setup.
 ```
 apt install samba attr winbind libpam-winbind libnss-winbind libpam-krb5 krb5-config krb5-user
 ```
@@ -75,22 +75,19 @@ systemctl stop smbd nmbd winbind
 systemctl disable smbd nmbd winbind
 mv /etc/samba/smb.conf /etc/samba/smb.conf.orig
 ```
-Provision the Samba AD, giving your desired password for the Administrator:
+Join the existing domain, giving the correct password for the Administrator:
 ```
-samba-tool domain provision --use-rfc2307 --interactive
-Realm=SAMDOM.EXAMPLE.COM
-Domain=SAMDOM
-Server Role=dc
-DNS backend=SAMBA_INTERNAL
-DNS forwarder IP address=8.8.8.8
+samba-tool domain join samdom.example.com DC -USAMDOM\\administrator
 ```
 Edit the Samba configuration file:
 ```
-DC1/EditSMB
+DC2/EditSMB
 ```
 These lines are added by the EditSMB script to the [global] section of **/etc/samba/smb.conf**
 ```
 interfaces = enp0s3
+dns forwarder = 8.8.8.8
+idmap_ldb:use rfc2307 = yes
 winbind nss info = rfc2307
 winbind use default domain = yes
 winbind offline logon = yes
@@ -115,12 +112,13 @@ smbclient -L localhost -U%
 Copy more config files to their proper location. This also puts the RFC2307 script in cron.hourly to add uidNumber
 and gidNumber to users, computers and groups added to AD. It runs the script and fixes the ownership of Group Policies.
 ```
-DC1/CopyFiles2
+DC2/CopyFiles2
 ```
 Make these changes for resolving DNS names to the **/etc/resolv.conf** file (Done with CopyFiles2):
 ```
 domain samdom.example.com
 search samdom.example.com
+nameserver 10.0.2.6
 nameserver 10.0.2.5
 nameserver 8.8.8.8
 ```
@@ -129,6 +127,7 @@ Verify the DNS configuration works correctly:
 host -t SRV _ldap._tcp.samdom.example.com.
 host -t SRV _kerberos._udp.samdom.example.com.
 host -t A dc1.samdom.example.com.
+host -t A dc2.samdom.example.com.
 ```
 Verify Kerberos:
 ```
@@ -163,13 +162,6 @@ netstat -tunlp | grep ntp
 Verify the NTP service is syncing with other servers:
 ```
 ntpq -p
-```
-## Ease AD password restrictions for testing, if desired:
-```
-samba-tool domain passwordsettings set --complexity=off
-samba-tool domain passwordsettings set --min-pwd-length=6
-samba-tool domain passwordsettings set --max-pwd-age=0
-samba-tool user setexpiry administrator --noexpiry
 ```
 ## Install the WSD Daemon which allows Windows Network to detect Linux domain members (Done with CopyFiles2).
 
@@ -228,7 +220,7 @@ Edit the /etc/dhcp/dhcpd.conf configuration file:
 #
 # option definitions common to all supported networks...
 option domain-name "samdom.example.com";
-option domain-name-servers 10.0.2.5;
+option domain-name-servers 10.0.2.6, 10.0.2.5;
 #
 default-lease-time 86400;
 max-lease-time 604800;
@@ -256,7 +248,7 @@ subnet 192.168.56.0 netmask 255.255.255.0 {
 # This is a very basic subnet declaration.
 #
 subnet 10.0.2.0 netmask 255.255.255.0 {
-range 10.0.2.50 10.0.2.100;
+range 10.0.2.101 10.0.2.150;
 option routers 10.0.2.1;
 }
 ```
@@ -266,12 +258,6 @@ systemctl restart isc-dhcp-server.service
 ```
 ## Test the AD DC
 
-Create an AD account for yourself and add it to the **Domain Admins** group with the commands:
-```
-samba-tool user create ted
-/etc/cron.hourly/RFC2307
-samba-tool group addmembers "Domain Admins" ted
-```
 Verify the domain users are shown by both commands:
 ```
 wbinfo -u
