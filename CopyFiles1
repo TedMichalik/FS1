@@ -4,17 +4,17 @@
 
 # Static IP
 mv /etc/network/interfaces /etc/network/interfaces.orig
-cp /root/DC1/config/interfaces /etc/network/
+cp /root/DC2/config/interfaces /etc/network/
 
 # DNS name resolving
 mv /etc/resolv.conf /etc/resolv.conf.orig
-cp /root/DC1/config/resolv.conf /etc/
+cp /root/DC2/config/resolv.conf /etc/
 
 # Local host name
 mv /etc/hosts /etc/hosts.orig
-cp /root/DC1/config/hosts /etc/
+cp /root/DC2/config/hosts /etc/
 
 # Default UMASK
 mv /etc/login.defs /etc/login.defs.orig
-cp /root/DC1/config/login.defs /etc/
+cp /root/DC2/config/login.defs /etc/
 
