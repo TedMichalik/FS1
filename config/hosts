@@ -1,5 +1,5 @@
 127.0.0.1	localhost
-10.0.2.5	DC1.samdom.example.com	DC1
+10.0.2.6	DC2.samdom.example.com	DC2
 
 # The following lines are desirable for IPv6 capable hosts
 ::1     localhost ip6-localhost ip6-loopback

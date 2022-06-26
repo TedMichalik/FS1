@@ -1,5 +1,5 @@
 # DC2 - Additional Debian AD DC Setup
-Scripts and configuration files needed to set up an additional Active Directory Domain Controller on Debian.
+Scripts and configuration files needed to set up an additional Active Directory Domain Controller on Debian in a VirtualBox environment.
 
 Reference links:
 
@@ -13,9 +13,6 @@ Download the Debian netinstall image. Boot from it to begin the installation.
 
 * Hostname: DC2.samdom.example.com
 * Leave the root password blank.
-* Manually set the enp0s3 network interface:
-  * address 10.0.2.6/24
-  * gateway 10.0.2.1
 * Enter the desired user name and password for the admin (sudo) account.
 * Make your disk partition selections and write changes to disk.
 * Software selection: Only “SSH server” and “standard system utilities”.
@@ -35,17 +32,17 @@ Copy config files to their proper location:
 DC2/CopyFiles1
 ```
 Add a static IP address for the second adapter.
-A second adapter was enabled for SSH logins forconfiguration and testing in VirtualBox.
+A second adapter was enabled for SSH logins for configuration and testing in VirtualBox.
 Make these changes to the **/etc/network/interfaces** file (Done with CopyFiles1):
 ```
 # The primary network interface
-allow-hotplug enp0s3
+auto enp0s3
 iface enp0s3 inet static
         address 10.0.2.6/24
         gateway 10.0.2.1
 
 # The secondary network interface
-allow-hotplug enp0s8
+auto enp0s8
 iface enp0s8 inet static
         address 192.168.56.6/24
 ```
@@ -118,9 +115,8 @@ Make these changes for resolving DNS names to the **/etc/resolv.conf** file (Don
 ```
 domain samdom.example.com
 search samdom.example.com
-nameserver 10.0.2.6
 nameserver 10.0.2.5
-nameserver 8.8.8.8
+nameserver 10.0.2.6
 ```
 Verify the DNS configuration works correctly:
 ```
@@ -170,7 +166,7 @@ Clone git repository and edit file:
 git clone https://github.com/christgau/wsdd
 cd wsdd
 ```
-Edit service file nano etc/systemd/wsdd.service
+Use this for service file etc/systemd/wsdd.service
 ```
 After=multi-user.target
 Wants=multi-user.target
@@ -193,7 +189,7 @@ Add winbind value for passwd and group lines in the /etc/nsswitch.conf configura
 passwd: files systemd winbind
 group:  files systemd winbind
 ```
-Enable  entries required for winbind service to automatically create home directories for each domain account at the first login:
+Manually run this to automatically create home directories for each domain account at the first login (NOT done CopyFiles2):
 ```
 pam-auth-update
 ```
@@ -209,7 +205,7 @@ Just use IPv4 on the NatNetwork with these edits to the /etc/default/isc-dhcp-se
 # On what interfaces should the DHCP server (dhcpd) serve DHCP requests?
 # Separate multiple interfaces with spaces, e.g. "eth0 eth1".
 INTERFACESv4="enp0s3"
-#INTERFACESv6=""
+INTERFACESv6=""
 ```
 Edit the /etc/dhcp/dhcpd.conf configuration file:
 ```
@@ -220,7 +216,7 @@ Edit the /etc/dhcp/dhcpd.conf configuration file:
 #
 # option definitions common to all supported networks...
 option domain-name "samdom.example.com";
-option domain-name-servers 10.0.2.6, 10.0.2.5;
+option domain-name-servers 10.0.2.6,10.0.2.5;
 #
 default-lease-time 86400;
 max-lease-time 604800;
@@ -256,6 +252,44 @@ Restart the service:
 ```
 systemctl restart isc-dhcp-server.service
 ```
+
+## Sysvol Replication & Active Directory Management
+Sysvol replication is currently not supported on Samba. To use a Sysvol Replication workaround, all domain controllers (DC) must use the same ID mappings for built-in users and groups.
+From root on the primary DC, copy the public key:
+```
+scp .ssh/id_rsa.pub pi@c3po:
+```
+Then from root on a secondary DC, create SSH keys and authorize the primary DC public key:
+```
+ssh-keygen -t rsa
+cat /home/pi/id_rsa.pub > .ssh/authorized_keys
+```
+Back on the primary DC, verify you can ssh to the secondary. 
+To use a Sysvol Replication workaround, all domain controllers (DC) must use the same ID mappings for built-in users and groups.
+By default, a Samba DC stores the user & group IDs in 'xidNumber' attributes in 'idmap.ldb'. Because of the way 'idmap.ldb' works, you cannot guarantee that each DC will use the same ID for a given user or group. To ensure that you do use the same IDs, you must:
+Create a hot-backup of the /var/lib/samba/private/idmap.ldb file on the existing DC:
+```
+tdbbackup -s .bak /var/lib/samba/private/idmap.ldb
+```
+ 
+This creates a backup file /var/lib/samba/private/idmap.ldb.bak.
+Move the backup file to the /var/lib/samba/private/ folder on the new joined DC and remove the .bak suffix to replace the existing file.
+Run net cache flush on the new DC.
+You will now need to sync Sysvol to the new DC.
+Reset the Sysvol folder's file system access control lists (ACL) on the new DC:
+```
+samba-tool ntacl sysvolreset
+```
+ 
+Add the following cron job:
+```
+nano  /etc/cron.hourly/sysvol
+#!/bin/bash
+
+#Sync sysvol with c3po
+rsync -az --delete /var/lib/samba/sysvol c3po:/var/lib/samba
+```
+
 ## Test the AD DC
 
 Verify the domain users are shown by both commands:
@@ -274,18 +308,3 @@ touch /tmp/testfile
 chown ted:"Domain Admins" /tmp/testfile
 ls -l /tmp/testfile
 ```
-
-## Join a Windows 10 Pro Desktop to the SAMDOM Domain
-
-After joining the Windows desktop to the Domain, login with your **Domain Admins** account.
-
-Go to **Settings | Apps & Features | Optional features** and make sure the following are installed:
-* RSAT: Active Directory Domain Services and Lightweight Directory Services Tools
-* RSAT: DNS Server Tools
-* RSAT: Group Policy Management Tools
-
-Run **Active Directory Users and Computers**:
-* Make the **Domain Admins** group a member of the **Group Policy Creator Owners** group.
-* Make the **Domain Computers** group a member of the **DnsAdmins** group.
-
-Create a GPO  with the instructions at [This Link](https://wiki.samba.org/index.php/Time_Synchronisation#Configuring_Time_Synchronisation_on_a_Windows_Domain_Member)

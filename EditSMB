@@ -1,5 +1,5 @@
 #!/bin/bash
 # EditSMB - Script to insert changes to the Samba configuration file.
 
-# Samba config
-sed -i '/rfc2307/r /root/DC1/config/smb.insert' /etc/samba/smb.conf
+# Insert changes after "workgroup" line.
+sed -i '/workgroup/ r /root/DC2/config/smb.insert' /etc/samba/smb.conf
