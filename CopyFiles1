@@ -4,13 +4,16 @@
 
 # Static IP
 mv /etc/network/interfaces /etc/network/interfaces.orig
-cp /root/DC2/config/interfaces /etc/network/
+cp /root/FS1/config/interfaces /etc/network/
 
 # Local host name
 mv /etc/hosts /etc/hosts.orig
-cp /root/DC2/config/hosts /etc/
+cp /root/FS1/config/hosts /etc/
 
 # Default UMASK
 mv /etc/login.defs /etc/login.defs.orig
-cp /root/DC2/config/login.defs /etc/
+cp /root/FS1/config/login.defs /etc/
 
+# NTP Time Service
+mv /etc/systemd/timesyncd.conf /etc/systemd/timesyncd.conf.orig
+cp /root/FS1/config/timesyncd.conf /etc/systemd/

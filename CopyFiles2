@@ -2,40 +2,23 @@
 # CopyFiles2 - Script #2 to copy configuration files to their proper location.
 #		(First save originals as *.orig)
 
-# Copy script to cron.hourly that sets RFC2307 attributes in the SAMBA AD DC
-cp /root/DC2/RFC2307 /etc/cron.hourly/
-/etc/cron.hourly/RFC2307
-
-# Fix permissions for the domain on sysvol
-chown 10500:10512 -R /var/lib/samba/sysvol/samdom.example.com/
+# Samba configuration
+mv /etc/samba/smb.conf /etc/samba/smb.conf.orig
+cp /root/FS1/config/smb.conf /etc/samba/
 
 # DNS name resolving
-cp /root/DC2/config/resolv.conf /etc/resolv.conf
-
-# NTP Time Service
-mv /etc/ntp.conf /etc/ntp.conf.orig
-cp /root/DC2/config/ntp.conf /etc/
-chown root:ntp /var/lib/samba/ntp_signd/
-chmod 750 /var/lib/samba/ntp_signd/
-systemctl restart ntp.service
+cp /root/FS1/config/resolv.conf /etc/resolv.conf
 
 # WSD Daemon
-cp /root/DC2/config/wsdd /usr/bin/
-cp /root/DC2/config/wsdd.service /etc/systemd/system/
+cp /root/FS1/config/wsdd /usr/bin/
+cp /root/FS1/config/wsdd.service /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable wsdd.service
 systemctl start wsdd.service
 
 # Authentication
 mv /etc/nsswitch.conf /etc/nsswitch.conf.orig
-cp /root/DC2/config/nsswitch.conf /etc/
+cp /root/FS1/config/nsswitch.conf /etc/
 
 # sudo for Domain Admins
-cp /root/DC2/config/SAMDOM /etc/sudoers.d/
-
-# DHCP Service
-mv /etc/default/isc-dhcp-server /etc/default/isc-dhcp-server.orig
-cp /root/DC2/config/isc-dhcp-server /etc/default/
-mv /etc/dhcp/dhcpd.conf /etc/dhcp/dhcpd.conf.orig
-cp /root/DC2/config/dhcpd.conf /etc/dhcp/
-systemctl restart isc-dhcp-server.service
+cp /root/FS1/config/SAMDOM /etc/sudoers.d/

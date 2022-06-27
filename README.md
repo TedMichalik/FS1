@@ -1,4 +1,4 @@
-# DC2 - Additional Debian AD DC Setup
+# FS1 - Debian Member Server
 Scripts and configuration files needed to set up an additional Active Directory Domain Controller on Debian in a VirtualBox environment.
 
 Reference links:
@@ -20,7 +20,7 @@ Use these Network settings for all machines in VirtualBox:
 
 Download the Debian netinstall image. Boot from it to begin the installation.
 
-* Hostname: DC2.samdom.example.com
+* Hostname: FS1.samdom.example.com
 * Leave the root password blank.
 * Enter the desired user name and password for the admin (sudo) account.
 * Make your disk partition selections and write changes to disk.
@@ -34,11 +34,11 @@ Install git and download these instructions, scripts and configuration files:
 apt update
 apt dist-upgrade
 apt install git
-git clone https://github.com/TedMichalik/DC2.git
+git clone https://github.com/TedMichalik/FS1.git
 ```
 Copy config files to their proper location:
 ```
-DC2/CopyFiles1
+FS1/CopyFiles1
 ```
 Add a static IP address for the second adapter.
 A second adapter was enabled for SSH logins for configuration and testing in VirtualBox.
@@ -58,32 +58,36 @@ iface enp0s8 inet static
 Make these changes for resolving the local host name to the **/etc/hosts** file (Done with CopyFiles1):
 ```
 127.0.0.1 localhost
-10.0.2.6 DC2.samdom.example.com DC2
+10.0.2.8 FS1.samdom.example.com FS1
 ```
 Change the default UMASK in the **/etc/login.defs** file (Done with CopyFiles1):
 ```
 UMASK 002
 ```
+Configure NTP (Done with CopyFiles1)
+
+Add this line in the **/etc/systemd/timesyncd.conf** file:
+```
+NTP=dc1.samdom.example.com dc2.samdom.example.com
+```
 Reboot the machine to switch to the static IP address.
 SSH into the secondary adapter and login as the admin user and switch to root.
 
-Install Samba and packages needed for an AD DC. Use the FQDN (DC2.samdom.example.com) for the servers in the Kerberos setup.
+Install Samba and packages needed for a member server. Use the FQDN (FS1.samdom.example.com) for the servers in the Kerberos setup.
 ```
-apt install samba attr winbind libpam-winbind libnss-winbind libpam-krb5 krb5-config krb5-user
+apt install samba krb5-config krb5-user winbind libpam-winbind libnss-winbind
 ```
 Also install some utility programs:
 ```
-apt install smbclient ldb-tools net-tools dnsutils ntp isc-dhcp-server rsync
+apt install smbclient net-tools dnsutils avahi-daemon rsync git
 ```
-Stop and disable all Samba processes,  and remove the default smb.conf file:
+Stop all Samba processes:
 ```
 systemctl stop smbd nmbd winbind
-systemctl disable smbd nmbd winbind
-mv /etc/samba/smb.conf /etc/samba/smb.conf.orig
 ```
-Join the existing domain, giving the correct password for the Administrator:
+Copy more config files to their proper location.
 ```
-samba-tool domain join samdom.example.com DC -USAMDOM\\administrator
+DC2/CopyFiles2
 ```
 Edit the Samba configuration file:
 ```
@@ -102,23 +106,22 @@ winbind enum groups = yes
 protocol = SMB3
 usershare max shares = 0
 ```
-Use the Samba created Kerberos configuration file for your DC, enable the correct Samba services, and reboot to make sure everything works:
+Use the Samba created Kerberos configuration file for your DC, enable the correct Samba services:
 ```
 cp /var/lib/samba/private/krb5.conf /etc/
 systemctl unmask samba-ad-dc
 systemctl start samba-ad-dc
 systemctl enable samba-ad-dc
+```
+Join the existing domain, and reboot to make sure everything works:
+```
+samba-tool domain join samdom.example.com DC -USAMDOM\\administrator
 reboot
 ```
 Login as the admin user and switch to root.
 Verify the File Server shares provided by the DC:
 ```
 smbclient -L localhost -U%
-```
-Copy more config files to their proper location. This also puts the RFC2307 script in cron.hourly to add uidNumber
-and gidNumber to users, computers and groups added to AD. It runs the script and fixes the ownership of Group Policies.
-```
-DC2/CopyFiles2
 ```
 Make these changes for resolving DNS names to the **/etc/resolv.conf** file (Done with CopyFiles2):
 ```
@@ -138,35 +141,6 @@ Verify Kerberos:
 ```
 kinit administrator
 klist
-```
-## Configure NTP (Done with CopyFiles2)
-
-Add these two lines in the **/etc/ntp.conf** file:
-```
-ntpsigndsocket /var/lib/samba/ntp_signd/
-
-...
-
-restrict default kod nomodify notrap nopeer mssntp
-```
-Fix the permissions for the **ntp_signed** directory:
-```
-chown root:ntp /var/lib/samba/ntp_signd/
-chmod 750 /var/lib/samba/ntp_signd/
-```
-Restart the NTP service:
-```
-systemctl restart ntp.service
-```
-## Check NTP
-
-Verify the NTP service has open sockets:
-```
-netstat -tunlp | grep ntp
-```
-Verify the NTP service is syncing with other servers:
-```
-ntpq -p
 ```
 ## Install the WSD Daemon which allows Windows Network to detect Linux domain members (Done with CopyFiles2).
 
