@@ -1,6 +1,6 @@
 #!/bin/bash
 # CopyFiles1 - Script #1 to copy configuration files to their proper location.
-#		(Fist save originals as *.orig)
+#		(First save originals as *.orig)
 
 # Static IP
 mv /etc/network/interfaces /etc/network/interfaces.orig
