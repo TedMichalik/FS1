@@ -26,3 +26,8 @@ cp /root/FS1/config/nsswitch.conf /etc/
 
 # sudo for Domain Admins
 cp /root/FS1/config/SAMDOM /etc/sudoers.d/
+
+# Create the Public folder
+mkdir /opt/Public
+chgrp "Domain Users" /opt/Public
+chmod 2775 /opt/Public

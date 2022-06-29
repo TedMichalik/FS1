@@ -32,7 +32,7 @@ Login as the admin user and switch to root.
 Install git and download these instructions, scripts and configuration files:
 ```
 apt update
-apt dist-upgrade
+apt full-upgrade
 apt install git
 git clone https://github.com/TedMichalik/FS1.git
 ```
@@ -79,7 +79,7 @@ apt install samba krb5-config krb5-user winbind libpam-winbind libnss-winbind
 ```
 Also install some utility programs:
 ```
-apt install smbclient net-tools dnsutils avahi-daemon rsync git
+apt install smbclient net-tools dnsutils avahi-daemon rsync
 ```
 Stop all Samba processes:
 ```
@@ -87,7 +87,7 @@ systemctl stop smbd nmbd winbind
 ```
 Copy more config files to their proper location.
 ```
-DC2/CopyFiles2
+FS1/CopyFiles2
 ```
 Make these changes for resolving DNS names to the **/etc/resolv.conf** file (Done with CopyFiles2):
 ```
@@ -96,7 +96,7 @@ search samdom.example.com
 nameserver 10.0.2.5
 nameserver 10.0.2.6
 ```
-Edit the Samba configuration file (Done with CopyFiles2):
+Edit the Samba configuration file **/etc/samba/smb.conf** (Done with CopyFiles2):
 ```
 [global]
 workgroup = SAMDOM
@@ -205,6 +205,12 @@ Give sudo access to members of “domain admins” (Done with CopyFiles2):
 echo "%SAMDOM\\domain\ admins ALL=(ALL) ALL" > /etc/sudoers.d/SAMDOM
 chmod 0440 /etc/sudoers.d/SAMDOM
 ```
+Create the Public folder (Done with CopyFiles2):
+```
+mkdir /opt/Public
+chgrp "Domain Users" /opt/Public
+chmod 2775 /opt/Public
+```
 ## Test the Domain connection
 
 Verify the domain users are shown by both commands:
@@ -219,7 +225,7 @@ getent group
 ```
 Verify the domain ownership on a test file:
 ```
-touch /tmp/testfile
-chown ted:"Domain Admins" /tmp/testfile
-ls -l /tmp/testfile
+touch /opt/Public/testfile
+chown ted:"Domain Admins" /opt/Public/testfile
+ls -l /opt/Public/
 ```
