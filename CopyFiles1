@@ -13,6 +13,7 @@ cp /root/FS1/config/hosts /etc/
 # Default UMASK
 mv /etc/login.defs /etc/login.defs.orig
 cp /root/FS1/config/login.defs /etc/
+echo "umask 002" > /etc/profile.d/umask.sh
 
 # NTP Time Service
 mv /etc/systemd/timesyncd.conf /etc/systemd/timesyncd.conf.orig

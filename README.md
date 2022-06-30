@@ -64,6 +64,10 @@ Change the default UMASK in the **/etc/login.defs** file (Done with CopyFiles1):
 ```
 UMASK 002
 ```
+Create file in /etc/profile.d/ for UMASK of SSH logins (Done with CopyFiles1):
+```
+echo "umask 002" > /etc/profile.d/umask.sh
+```
 Configure NTP (Done with CopyFiles1)
 
 Add this line in the **/etc/systemd/timesyncd.conf** file:
@@ -202,7 +206,7 @@ pam-auth-update
 ```
 Give sudo access to members of “domain admins” (Done with CopyFiles2):
 ```
-echo "%SAMDOM\\domain\ admins ALL=(ALL) ALL" > /etc/sudoers.d/SAMDOM
+echo "%domain\ admins ALL=(ALL) ALL" > /etc/sudoers.d/SAMDOM
 chmod 0440 /etc/sudoers.d/SAMDOM
 ```
 Create the Public folder (Done with CopyFiles2):
