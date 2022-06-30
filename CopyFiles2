@@ -31,4 +31,4 @@ chmod 0440 /etc/sudoers.d/SAMDOM
 # Create the Public folder
 mkdir /opt/Public
 chgrp "Domain Users" /opt/Public
-chmod 2775 /opt/Public
+chmod 770 /opt/Public
