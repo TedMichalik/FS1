@@ -132,10 +132,9 @@ directory mask = 2755
 
 [Public]
 
+comment = Shared Files
 path = /opt/Public
-browsable = yes
 read only = no
-public = yes
 guest ok = yes
 create mask = 0664
 directory mask = 2775
