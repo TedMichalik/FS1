@@ -50,6 +50,24 @@ Copy config files to their proper location:
 ```
 FS1/CopyFiles
 ```
+Add a static IP address for the first adapter.
+Modify file **/etc/network/interfaces** with this content (Done with CopyFiles):
+```
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+allow-hotplug enp0s3
+iface enp0s3 inet static
+ address 10.0.2.6/24
+	gateway 10.0.2.1
+```
 Add a static IP address for the second adapter.
 A second adapter was enabled for SSH logins for configuration and testing in VirtualBox.
 Create file **/etc/network/interfaces.d/VirtualBox** with this content (Done with CopyFiles):
