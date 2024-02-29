@@ -2,8 +2,15 @@
 # CopyFiles - Script to install Samba AD DC and copy configuration files to their proper location.
 #		(Fist save originals as *.orig)
 
+# Static IP
+cp /root/FS1/config/interfaces /etc/network/
+
+# Static IP for VirtualBox network interface
+cp /root/FS1/config/VirtualBox /etc/network/interfaces.d/
+
 # Default UMASK
 sed -i "s/^UMASK.*022/UMASK\t\t002/" /etc/login.defs
+sed -i -nr '/umask/!p;$asession optional pam_umask.so' /etc/pam.d/common-session
 
 # Sync time with the AD DC
 sed -i -nr '/NTP=/!p;$aNTP=DC1.samdom.example.com' /etc/systemd/timesyncd.conf
@@ -28,6 +35,3 @@ cp /root/FS1/config/krb5.conf /etc/
 # sudo for Domain Admins
 cp /root/FS1/config/SAMDOM /etc/sudoers.d/
 chmod 0440 /etc/sudoers.d/SAMDOM
-
-# Static IP for VirtualBox network interface
-cp /root/FS1/config/VirtualBox /etc/network/interfaces.d/
