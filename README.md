@@ -79,13 +79,17 @@ auto enp0s8
 iface enp0s8 inet static
         address 192.168.56.6/24
 ```
-Change the default UMASK in the **/etc/login.defs** file (Done with CopyFiles1):
+Change the default UMASK in the **/etc/login.defs** file (Done with CopyFiles):
 ```
 UMASK 002
 ```
+Add the umask option to **/etc/pam.d/common-session** file (Done with CopyFiles):
+```
+session optional pam_umask.so
+```
 Sync time with the AD DC by adding this line to the /etc/systemd/timesyncd.conf file:
 ```
-NTP=dc1.samdom.example.com dc2.samdom.example.com
+NTP=dc1.samdom.example.com
 ```
 Reboot the machine to switch to the static IP address.
 SSH into the secondary adapter and login as the admin user and switch to root.
