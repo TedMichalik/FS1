@@ -25,7 +25,7 @@ Use these Network settings for all machines in VirtualBox:
   * Name: NatNetwork  (10.0.2.0/24 – DHCP & IPv6 disabled)
 * Adapter 2: Enabled
   * Attached to: Host-only Adapter
-  * Name: VirtualBox Host-Only Ethernet Adapter (192.168.56.0/24 – DHCP & IPv6 disabled)
+  * Name: vboxnet0 (192.168.56.1/24 – DHCP disabled)
 
 Download the Debian netinstall image. Boot from it to begin the installation.
 
