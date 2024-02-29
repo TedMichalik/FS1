@@ -1,13 +1,22 @@
-# FS1 - Debian Member Server
-Scripts and configuration files needed to set up an additional Active Directory Domain Controller on Debian in a VirtualBox environment.
+# FS1 - Debian File Server in AD
+Scripts and configuration files needed to set up an Active Directory File Server on Debian in a VirtualBox environment.
 
 Reference links:
 
 * https://wiki.samba.org/index.php/Setting_up_Samba_as_an_Active_Directory_Domain_Controller
 * https://wiki.samba.org/index.php/Idmap_config_ad
-* https://github.com/christgau/wsdd
 * https://wiki.samba.org/index.php/Setting_up_a_Share_Using_Windows_ACLs
-* https://www.tecmint.com/manage-samba4-ad-from-windows-via-rsat/
+
+Create a machine in VirtualBox:
+
+* Name: FS1
+* Type: Linux
+* Version: Debian (64-bit)
+* CPUs: 1
+* RAM: 1024 MB
+* Video Memory: 64 MB
+* Virtual HD: 8.00 GB
+* HD Type: VDI, dynamically allocated
 
 Use these Network settings for all machines in VirtualBox:
 
@@ -20,7 +29,8 @@ Use these Network settings for all machines in VirtualBox:
 
 Download the Debian netinstall image. Boot from it to begin the installation.
 
-* Hostname: FS1.samdom.example.com
+* Hostname: FS1
+* Domain name: samdom.example.com
 * Leave the root password blank.
 * Enter the desired user name and password for the admin (sudo) account.
 * Make your disk partition selections and write changes to disk.
@@ -38,39 +48,24 @@ git clone https://github.com/TedMichalik/FS1.git
 ```
 Copy config files to their proper location:
 ```
-FS1/CopyFiles1
+FS1/CopyFiles
 ```
 Add a static IP address for the second adapter.
 A second adapter was enabled for SSH logins for configuration and testing in VirtualBox.
-Make these changes to the **/etc/network/interfaces** file (Done with CopyFiles1):
+Create file **/etc/network/interfaces.d/VirtualBox** with this content (Done with CopyFiles):
 ```
-# The primary network interface
-auto enp0s3
-iface enp0s3 inet static
-        address 10.0.2.6/24
-        gateway 10.0.2.1
+# This file describes the VirtualBox network interface
 
-# The secondary network interface
+# VirtualBox network interface
 auto enp0s8
 iface enp0s8 inet static
         address 192.168.56.6/24
-```
-Make these changes for resolving the local host name to the **/etc/hosts** file (Done with CopyFiles1):
-```
-127.0.0.1 localhost
-10.0.2.8 FS1.samdom.example.com FS1
 ```
 Change the default UMASK in the **/etc/login.defs** file (Done with CopyFiles1):
 ```
 UMASK 002
 ```
-Create file in /etc/profile.d/ for UMASK of SSH logins (Done with CopyFiles1):
-```
-echo "umask 002" > /etc/profile.d/umask.sh
-```
-Configure NTP (Done with CopyFiles1)
-
-Add this line in the **/etc/systemd/timesyncd.conf** file:
+Sync time with the AD DC by adding this line to the /etc/systemd/timesyncd.conf file:
 ```
 NTP=dc1.samdom.example.com dc2.samdom.example.com
 ```
