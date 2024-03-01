@@ -87,37 +87,26 @@ Add the umask option to **/etc/pam.d/common-session** file (Done with CopyFiles)
 ```
 session optional pam_umask.so
 ```
-Sync time with the AD DC by adding this line to the /etc/systemd/timesyncd.conf file:
+Sync time with the AD DC by adding this line to the /etc/systemd/timesyncd.conf file (Done with CopyFiles):
 ```
 NTP=dc1.samdom.example.com
 ```
 Reboot the machine to switch to the static IP address.
 SSH into the secondary adapter and login as the admin user and switch to root.
 
-Install Samba and packages needed for a member server. Use the FQDN (FS1.samdom.example.com) for the servers in the Kerberos setup.
+Install Samba and packages needed for a member server (Done with CopyFiles):
 ```
-apt install samba winbind libpam-winbind libnss-winbind libpam-krb5 krb5-config krb5-user
+apt install -y samba winbind libpam-winbind libnss-winbind libpam-krb5 krb5-config krb5-user
 ```
-Also install some utility programs:
+Also install some utility programs (Done with CopyFiles):
 ```
-apt install smbclient net-tools dnsutils avahi-daemon rsync
+apt install -y smbclient net-tools wsdd
 ```
-Stop all Samba processes:
+Stop all Samba processes (Done with CopyFiles):
 ```
 systemctl stop smbd nmbd winbind
 ```
-Copy more config files to their proper location.
-```
-FS1/CopyFiles2
-```
-Make these changes for resolving DNS names to the **/etc/resolv.conf** file (Done with CopyFiles2):
-```
-domain samdom.example.com
-search samdom.example.com
-nameserver 10.0.2.5
-nameserver 10.0.2.6
-```
-Edit the Samba configuration file **/etc/samba/smb.conf** (Done with CopyFiles2):
+Edit the Samba configuration file **/etc/samba/smb.conf** (Done with CopyFiles):
 ```
 [global]
 workgroup = SAMDOM
@@ -156,20 +145,17 @@ guest ok = yes
 create mask = 0664
 directory mask = 2775
 ```
-Use this Kerberos configuration file for **/etc/krb5.conf** (Done with CopyFiles2):
+Use this Kerberos configuration file for **/etc/krb5.conf** (Done with CopyFiles):
 ```
 [libdefaults]
-        default_realm = SAMDOM.EXAMPLE.COM
-        dns_lookup_realm = false
-        dns_lookup_kdc = true
-
-[realms]
-SAMDOM.EXAMPLE.COM = {
-        default_domain = samdom.example.com
-}
-
-[domain_realm]
-        DC1 = SAMDOM.EXAMPLE.COM
+    default_realm = SAMDOM.EXAMPLE.COM
+    dns_lookup_realm = false
+    dns_lookup_kdc = true
+```
+Give sudo access to members of “domain admins” (Done with CopyFiles):
+```
+echo "%domain\ admins ALL=(ALL) ALL" > /etc/sudoers.d/SAMDOM
+chmod 0440 /etc/sudoers.d/SAMDOM
 ```
 Test Kerberos authentication against an AD administrative account and list the ticket by issuing the commands:
 ```
@@ -178,61 +164,38 @@ klist
 ```
 Join the domain, and restart Samba:
 ```
-net ads join -k
+samba-tool domain join samdom.example.com MEMBER -U administrator
 systemctl start smbd nmbd winbind
-
 ```
 Verify the File Server shares:
 ```
 smbclient -L localhost -U%
 ```
-## Install the WSD Daemon which allows Windows Network to detect Linux domain members (Done with CopyFiles2).
-
-Clone git repository and edit file:
-```
-git clone https://github.com/christgau/wsdd
-cd wsdd
-```
-Use this for service file etc/systemd/wsdd.service
-```
-After=multi-user.target
-Wants=multi-user.target
-ExecStart=/usr/bin/wsdd -d SAMDOM -4 -s
-User=daemon
-Group=daemon
-```
-Copy the files to the correct locations, enable the service, and start it:
-```
-cp src/wsdd.py /usr/bin/wsdd
-cp etc/systemd/wsdd.service /etc/systemd/system
-systemctl daemon-reload
-systemctl enable wsdd.service
-systemctl start wsdd.service
-```
-## Configure AD Accounts Authentication
-
-Add winbind value for passwd and group lines in the /etc/nsswitch.conf configuration file (Done with CopyFiles2):
-```
-passwd: files systemd winbind
-group:  files systemd winbind
-```
-Manually run this to automatically create home directories for each domain account at the first login (NOT done CopyFiles2):
+Enable "Create home directory on login":
 ```
 pam-auth-update
 ```
-Give sudo access to members of “domain admins” (Done with CopyFiles2):
-```
-echo "%domain\ admins ALL=(ALL) ALL" > /etc/sudoers.d/SAMDOM
-chmod 0440 /etc/sudoers.d/SAMDOM
-```
-Create the Public folder (Done with CopyFiles2):
+Create the Public folder (Done with CopyFiles):
 ```
 mkdir /opt/Public
 chgrp "Domain Users" /opt/Public
 chmod 2775 /opt/Public
 ```
-## Test the Domain connection
-
+Reboot to make sure everything works:
+```
+reboot
+```
+## Test the Member Server
+Login as the admin user. Verify the Public share is present (it will fail the first time):
+```
+smbclient -L localhost -U%
+```
+Verify the DNS configuration works correctly:
+```
+host -t SRV _ldap._tcp.samdom.example.com.
+host -t SRV _kerberos._udp.samdom.example.com.
+host -t A dc1.samdom.example.com.
+```
 Verify the domain users are shown by both commands:
 ```
 wbinfo -u
@@ -243,9 +206,15 @@ Verify the domain groups are shown by both commands:
 wbinfo -g
 getent group
 ```
+Logout the admin user. You should now be able to login a domain user.
+
+Verify that a home directory was created and that umask is 002:
+```
+pwd
+umask
+```
 Verify the domain ownership on a test file:
 ```
 touch /opt/Public/testfile
-chown ted:"Domain Admins" /opt/Public/testfile
 ls -l /opt/Public/
 ```
