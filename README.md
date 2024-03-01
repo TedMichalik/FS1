@@ -175,7 +175,7 @@ Enable "Create home directory on login":
 ```
 pam-auth-update
 ```
-Create the Public folder (Done with CopyFiles):
+Create the Public folder:
 ```
 mkdir /opt/Public
 chgrp "Domain Users" /opt/Public
