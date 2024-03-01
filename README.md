@@ -186,11 +186,7 @@ Reboot to make sure everything works:
 reboot
 ```
 ## Test the Member Server
-Login as the admin user. Verify the Public share is present (it will fail the first time):
-```
-smbclient -L localhost -U%
-```
-Verify the DNS configuration works correctly:
+Login as the admin user. Verify the DNS configuration works correctly:
 ```
 host -t SRV _ldap._tcp.samdom.example.com.
 host -t SRV _kerberos._udp.samdom.example.com.
