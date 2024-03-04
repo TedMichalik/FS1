@@ -14,7 +14,7 @@ Create a machine in VirtualBox:
 * Version: Debian (64-bit)
 * CPUs: 1
 * RAM: 1024 MB
-* Video Memory: 64 MB
+* Video Memory: 16 MB
 * Virtual HD: 8.00 GB
 * HD Type: VDI, dynamically allocated
 
