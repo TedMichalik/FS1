@@ -3,7 +3,7 @@ Scripts and configuration files needed to set up an Active Directory File Server
 
 Reference links:
 
-* https://wiki.samba.org/index.php/Setting_up_Samba_as_an_Active_Directory_Domain_Controller
+* https://wiki.samba.org/index.php/Setting_up_Samba_as_a_Domain_Member
 * https://wiki.samba.org/index.php/Idmap_config_ad
 * https://wiki.samba.org/index.php/Setting_up_a_Share_Using_Windows_ACLs
 
@@ -14,7 +14,6 @@ Create a machine in VirtualBox:
 * Version: Debian (64-bit)
 * CPUs: 1
 * RAM: 1024 MB
-* Video Memory: 16 MB
 * Virtual HD: 8.00 GB
 * HD Type: VDI, dynamically allocated
 
@@ -25,7 +24,7 @@ Use these Network settings for all machines in VirtualBox:
   * Name: NatNetwork  (10.0.2.0/24 – DHCP & IPv6 disabled)
 * Adapter 2: Enabled
   * Attached to: Host-only Adapter
-  * Name: vboxnet0 (192.168.56.1/24 – DHCP disabled)
+  * Name: vboxnet0 (192.168.56.0/24 – DHCP disabled)
 
 Download the Debian netinstall image. Boot from it to begin the installation.
 
@@ -42,11 +41,10 @@ Login as the admin user and switch to root.
 Install git and download these instructions, scripts and configuration files:
 ```
 apt update
-apt full-upgrade
 apt install git
 git clone https://github.com/TedMichalik/FS1.git
 ```
-Copy config files to their proper location:
+## Install software and copy config files to their proper location:
 ```
 FS1/CopyFiles
 ```
@@ -65,7 +63,7 @@ iface lo inet loopback
 # The primary network interface
 allow-hotplug enp0s3
 iface enp0s3 inet static
- address 10.0.2.6/24
+ address 10.0.2.8/24
 	gateway 10.0.2.1
 ```
 Add a static IP address for the second adapter.
@@ -77,7 +75,7 @@ Create file **/etc/network/interfaces.d/VirtualBox** with this content (Done wit
 # VirtualBox network interface
 auto enp0s8
 iface enp0s8 inet static
-        address 192.168.56.6/24
+        address 192.168.56.8/24
 ```
 Change the default UMASK in the **/etc/login.defs** file (Done with CopyFiles):
 ```
@@ -91,7 +89,7 @@ Sync time with the AD DC by adding this line to the /etc/systemd/timesyncd.conf 
 ```
 NTP=dc1.samdom.example.com
 ```
-Reboot the machine to switch to the static IP address.
+If not using the CopyFiles script,reboot the machine to switch to the static IP addressand then
 SSH into the secondary adapter and login as the admin user and switch to root.
 
 Install Samba and packages needed for a member server (Done with CopyFiles):
