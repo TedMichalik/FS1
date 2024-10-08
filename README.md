@@ -152,6 +152,13 @@ Give sudo access to members of “domain admins” (Done with CopyFiles):
 echo "%domain\ admins ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/SAMDOM
 chmod 0440 /etc/sudoers.d/SAMDOM
 ```
+Reboot to make sure everything works:
+```
+reboot
+```
+## Finish setting up the domain member
+SSH into the secondary adapter and login as the admin user and switch to root.
+
 Test Kerberos authentication against an AD administrative account and list the ticket by issuing the commands:
 ```
 kinit administrator
@@ -160,9 +167,10 @@ klist
 Join the domain, and restart Samba:
 ```
 samba-tool domain join samdom.example.com MEMBER -U administrator
-systemctl start smbd nmbd winbind
+systemctl restart smbd nmbd winbind
 ```
 Verify the File Server shares:
+(Note: This may give a timeout error the first time)
 ```
 smbclient -L localhost -U%
 ```
@@ -176,12 +184,8 @@ mkdir /opt/Public
 chgrp "Domain Users" /opt/Public
 chmod 2775 /opt/Public
 ```
-Reboot to make sure everything works:
-```
-reboot
-```
 ## Test the Member Server
-Login as the admin user. Verify the DNS configuration works correctly:
+Verify the DNS configuration works correctly:
 ```
 host -t SRV _ldap._tcp.samdom.example.com.
 host -t SRV _kerberos._udp.samdom.example.com.
