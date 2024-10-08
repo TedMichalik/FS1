@@ -10,5 +10,5 @@ iface lo inet loopback
 # The primary network interface
 allow-hotplug enp0s3
 iface enp0s3 inet static
-	address 10.0.2.6/24
+	address 10.0.2.8/24
 	gateway 10.0.2.1
