@@ -149,7 +149,7 @@ Use this Kerberos configuration file for **/etc/krb5.conf** (Done with CopyFiles
 ```
 Give sudo access to members of “domain admins” (Done with CopyFiles):
 ```
-echo "%domain\ admins ALL=(ALL) ALL" > /etc/sudoers.d/SAMDOM
+echo "%domain\ admins ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/SAMDOM
 chmod 0440 /etc/sudoers.d/SAMDOM
 ```
 Test Kerberos authentication against an AD administrative account and list the ticket by issuing the commands:
